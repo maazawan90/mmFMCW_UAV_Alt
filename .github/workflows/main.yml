@@ -1,0 +1,51 @@
+name: Deploy website to Wiki
+
+on:
+  push:
+    branches:
+      - Wiki-Page
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout Git Repo
+      uses: actions/checkout@v2
+      with:
+        ref: Wiki-Page
+    
+    - name: Set up Ruby
+      uses: ruby/setup-ruby@v1
+      with:
+        ruby-version: '2.7'
+    
+    - name: Install dependencies
+      run: bundle install --jobs 4 --retry 3
+      
+    - name: Build Jekyll site
+      uses: helaili/jekyll-action@v2.5
+      with:
+        jekyll-version: '4.2.0'
+        source-directory: './'
+        destination-directory: '_site'
+        config-file: ./_config.yml
+    
+    - name: Copy site files to Wiki
+      run: cp -R _site/. wiki
+    
+    - name: Commit and push changes
+      run: |
+        git config --global user.email "maazawan90@hotmail.com" # replace with your email
+        git config --global user.name "Maaz Ali Awan" # replace with your name
+        git add -A
+        git commit -m "Deploy website to Wiki"
+        git push
+        
+    - name: Update Wiki
+      uses: peaceiris/actions-gh-pages@v3
+      with:
+        access-token: ${{ secrets.MAAZ_TOKEN }}
+        publish_dir: ./wiki
+        cname: github.com
+        commit_message: Update Wiki
